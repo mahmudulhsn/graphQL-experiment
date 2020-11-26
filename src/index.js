@@ -47,8 +47,39 @@ const posts = [
         title: 'Where does it come from?',
         body: 'Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.',
         published: false,
-        author: '2'
+        author: '2',
     },
+]
+
+const comments = [
+    {
+        id: '1',
+        text: 'What is Lorem Ipsum?',
+        author: 1,
+        post: 1
+        
+    },
+    {
+        id: '2',
+        text: 'Why do we use it?',
+        author: 2,
+        post: 1
+        
+    },
+    {
+        id: '3',
+        text: 'Where does it come from?',
+        author: 3,
+        post: 1
+        
+    },
+    {
+        id: '4',
+        text: '4th comment ',
+        author: 1,
+        post: 2
+        
+    }
 ]
 
 const typeDefs = `
@@ -57,6 +88,7 @@ const typeDefs = `
         posts(query: String) : [Post!]!
         me: User!
         post: Post!
+        comments: [Comment!]!
     }
 
     type User {
@@ -65,6 +97,7 @@ const typeDefs = `
         email: String!
         age: Int
         posts: [Post!]!
+        comments: [Comment]!
     }
     
     type Post {
@@ -73,6 +106,14 @@ const typeDefs = `
         body: String!
         published: Boolean!
         author: User!
+        comments: [Comment!]!
+    }
+
+    type Comment {
+        id: ID!
+        text: String!
+        author: User!
+        post: Post!
     }
 `
 const resolvers = {
@@ -110,6 +151,9 @@ const resolvers = {
                 body: 'This is body',
                 published: true
             }
+        },
+        comments (parent, args, ctx, info) {
+            return comments
         }
     },
     Post: {
@@ -117,12 +161,34 @@ const resolvers = {
             return users.find((user) => {
                 return user.id == parent.author
             })
+        },
+        comments (parent, args, ctx, info) {
+            return comments.filter((comment) => {
+                return comment.author == parent.id
+            })
         }
     },
     User: {
         posts (parent, args, ctx, info) {
             return posts.filter((post) => {
                 return post.author == parent.id
+            })
+        },
+        comments (parent, args, ctx, info) {
+            return comments.filter((comment) => {
+                return comment.author == parent.id
+            })
+        }
+    },
+    Comment: {
+        author (parent, args, ctx, info) {
+            return users.find((user) => {
+                return user.id == parent.author
+            })
+        },
+        post (parent, args, ctx, info) {
+            return posts.find((post) => {
+                return post.id == parent.post
             })
         }
     }
