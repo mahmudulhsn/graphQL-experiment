@@ -1,7 +1,7 @@
 import { GraphQLServer } from 'graphql-yoga'
 import uuidv4 from 'uuid/v4'
 
-const users = [
+let users = [
     {
         id: '1',
         name: 'Hasib',
@@ -28,7 +28,7 @@ const users = [
     }
 ]
 
-const posts = [
+let posts = [
     {
         id: '1',
         title: 'What is Lorem Ipsum?',
@@ -52,33 +52,33 @@ const posts = [
     },
 ]
 
-const comments = [
+let comments = [
     {
         id: '1',
         text: 'What is Lorem Ipsum?',
-        author: 1,
-        post: 1
+        author: '1',
+        post: '1'
         
     },
     {
         id: '2',
         text: 'Why do we use it?',
-        author: 2,
-        post: 1
+        author: '2',
+        post: '1'
         
     },
     {
         id: '3',
         text: 'Where does it come from?',
-        author: 3,
-        post: 1
+        author: '3',
+        post: '1'
         
     },
     {
         id: '4',
         text: '4th comment ',
-        author: 1,
-        post: 2
+        author: '1',
+        post: '2'
         
     }
 ]
@@ -93,9 +93,12 @@ const typeDefs = `
     }
 
     type Mutation {
-        createUser(data: createUserInput): User!
-        createPost(data: createPostInput): Post!
-        createComment(data: createCommentInput): Comment!
+        createUser(data: createUserInput!): User!
+        deleteUser(id: ID!): User!
+        createPost(data: createPostInput!): Post!
+        deletePost(id: ID!): Post!
+        createComment(data: createCommentInput!): Comment!
+        deleteComment(id: ID!): Comment!
     }
 
     input createUserInput {
@@ -199,6 +202,28 @@ const resolvers = {
 
             return user
         },
+        deleteUser(parent, args, ctx, info) {
+            const userIndex = users.findIndex((user) => user.id === args.id)
+
+            if (userIndex === -1) {
+                throw new Error('User not found')
+            }
+
+            const deletedUsers = users.splice(userIndex, 1)
+
+            posts = posts.filter((post) => {
+                const match = post.author === args.id
+
+                if (match) {
+                    comments = comments.filter((comment) => comment.post !== post.id)
+                }
+
+                return !match
+            })
+            comments = comments.filter((comment) => comment.author !== args.id)
+
+            return deletedUsers[0]
+        },
         createPost (parent, args, ctx, info) {
             const userExists = users.some((user) => user.id === args.data.author)
             if (!userExists) {
@@ -213,6 +238,19 @@ const resolvers = {
             posts.push(post)
 
             return post
+        },
+        deletePost(parent, args, ctx, info) {
+            const postIndex = posts.findIndex((post) => post.id === args.id)
+            
+            if (postIndex === -1) {
+                throw new Error('Post not found')
+            }
+
+            const deletedPosts = posts.splice(postIndex, 1)
+
+            comments = comments.filter((comment) => comment.post !== args.id)
+
+            return deletedPosts[0]
         },
         createComment (parent, args, ctx, info) {
             const userExists = users.some((user) => user.id === args.data.author)
@@ -233,6 +271,17 @@ const resolvers = {
             comments.push(comment)
 
             return comment
+        },
+        deleteComment(parent, args, ctx, info) {
+            const commentIndex = comments.findIndex((comment) => comment.id === args.id)
+
+            if (commentIndex === -1) {
+                throw new Error('Comment not found')
+            }
+
+            const deletedComments = comments.splice(commentIndex, 1)
+
+            return deletedComments[0]
         }
     },
     Post: {
